@@ -7,6 +7,7 @@ let USERS_ID=1;
 let ORGANIZATIONS_ID=1;
 let MEMBERS_ID=1;
 let BOARDS_ID=1;
+let ISSUES_ID=1;
 
 const USERS =[];
 
@@ -16,10 +17,10 @@ const MEMBERS =[];
 
 const BOARDS =[];
 
-
-
+const ISSUES =[]
 
 const app = express();
+
 app.use(express.json());
 
 app.post("/signup",(req,res)=>{
@@ -144,7 +145,7 @@ app.get("/organizations/:orgId", authmiddleware, (req, res) => {
     });
 })
 
-app.get("/boards/:boardId",authmiddleware,(req,res)=>{
+app.get("/board/:boardId",authmiddleware,(req,res)=>{
     const userId = req.userId;
     const board_id = parseInt(req.params.boardId);
     const board = BOARDS.find(brd=>brd.id===board_id);
@@ -165,9 +166,10 @@ app.get("/boards/:boardId",authmiddleware,(req,res)=>{
     const isMember = valid_boards.member.includes(userId);
 
     if (!isAdmin && !isMember) {
-        return res.status(403).json({
+        res.status(403).json({
             message: "you are not a member of this organization"
-        });
+        })
+        return;
     }
 
     res.json({
@@ -231,4 +233,159 @@ app.delete("/members", authmiddleware, (req,res)=>{
 
     
 })
+
+app.post("/organizations/:orgId/board", authmiddleware, (req,res)=>{
+    const userId = req.userId;
+    const organization_id = parseInt(req.params.orgId);
+    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    if(!organization){
+        res.status(403).json({
+            message:"no such organization!"
+        })
+        return;
+    }
+
+    if(userId !== organization.admin){
+        res.status(403).json({
+            message:"you are not the admin!"
+        })
+        return;
+    }
+
+    BOARDS.push({
+        id:BOARDS_ID++,
+        name:req.body.title,
+        orgId:organization_id,
+    })
+
+    res.json({
+        message:"board created",
+        id:BOARDS_ID-1
+    })
+})
+
+app.get("/organizations/:orgId/board", authmiddleware, (req,res)=>{
+    const userId = req.userId;
+    const organization_id = parseInt(req.params.orgId);
+    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    if(!organization){
+        res.status(403).json({
+            message:"no such organization!"
+        })
+        return;
+    }
+
+    const isAdmin = valid_boards.admin === userId;
+    const isMember = valid_boards.member.includes(userId);
+
+    if (!isAdmin && !isMember) {
+        res.status(403).json({
+            message: "you are not a member of this organization"
+        })
+        return;
+    }
+
+    const boards = BOARDS.filter((brd)=>{
+        return brd.orgId===organization_id;
+    })
+
+    res.json({
+        id:boards.id,
+        title:boards.name
+    })   
+})
+
+app.post("/organizations/:orgId/board/:boardId/lists", authmiddleware, (req,res)=>{
+    const userId = req.userId;
+    const organization_id = parseInt(req.params.orgId);
+    const board_id = parseInt(req.params.boardId);
+
+    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    if(!organization){
+        res.status(403).json({
+            message:"no such organization!"
+        })
+        return;
+    }
+
+    const board = BOARDS.find(brd=>brd.id===board_id);
+    if(!board || board.orgId !== organization_id){
+        res.status(403).json({
+            message:"there is no such board"
+        })
+        return;
+    }
+
+    if(userId!==organization.admin){
+        res.status(403).json({
+            message:"you are not the admin"
+        })
+        return;
+    }
+
+    LISTS.push({
+        id:LISTS_ID++,
+        title:req.body.title,
+        boardId:board_id,
+    })
+
+    res.json({
+        message:"lists are created",
+        id:LISTS_ID-1
+    })
+})
+
+app.post("/organizations/:orgId/boards/:boardId/issues",authmiddleware,(req,res)=>{
+    const userId = req.userId;
+    const organization_id = parseInt(req.params.orgId);
+    const board_id = parseInt(req.params.boardId);
+
+    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    if(!organization){
+        res.status(403).json({
+            message:"no such organization!"
+        })
+        return;
+    }
+
+    const board = BOARDS.find(brd=>brd.id===board_id);
+    if(!board || board.orgId !== organization_id){
+        res.status(403).json({
+            message:"there is no such board"
+        })
+        return;
+    }
+
+    if(userId!==organization.admin){
+        res.status(403).json({
+            message:"you are not the admin"
+        })
+        return;
+    }
+
+    const title=req.body.title;
+    if(!title){
+        res.status(403).json({
+            message:"issue title is required"
+        })
+        return;
+    }
+
+    ISSUES.push({
+        id:ISSUES_ID++,
+        boardId:board_id,
+        title:title,
+        status:req.body.status || "todo",
+    })
+
+    res.json({
+        message:"issue created",
+        id:ISSUES_ID-1
+    })
+
+})
+
+
+
+
 app.listen(3000);
