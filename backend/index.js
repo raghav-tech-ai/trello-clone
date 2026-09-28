@@ -2,16 +2,14 @@ require("dotenv").config()
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const { authmiddleware } = require("./middleware")
+const {userModel, organizationModel,boardsModel,issuesModel} = require("./models")
 
-let USERS_ID = 1;
-let ORGANIZATIONS_ID = 1;
+
 let BOARDS_ID = 1;
 let ISSUES_ID = 1;
 let VALID_STATUS = ["todo", "in-progress", "done"];
 
-const USERS = [];
 
-let ORGANIZATIONS = [];
 
 const BOARDS = [];
 
@@ -21,13 +19,15 @@ const app = express();
 
 app.use(express.json());
 
-app.post("/signup", (req, res) => {
+app.post("/signup",async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 
 
 
-    const userExists = USERS.find(u => u.username === username);
+    const userExists = await userModel.findOne({
+        username:username,
+    });
     if (userExists) {
         res.status(411).json({
             message: "user with this username already exists"
@@ -42,45 +42,54 @@ app.post("/signup", (req, res) => {
         return;
     }
 
-    USERS.push({
-        id: USERS_ID++,
-        username: username,
-        password: password
-    })
+    const newUser = await userModel.create({
+        username:username,
+        password:password
+    });
 
     res.json({
+        id:newUser._id,
         message: "you have signed up successfully"
     })
 
 })
 
-app.post("/signin", (req, res) => {
+app.post("/signin", async(req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 
-    const userExist = USERS.find(u => u.username === username && u.password === password);
-    if (!userExist) {
+    const userExists = await userModel.findOne({
+        username:username,
+        password:password
+    });
+    if (!userExists) {
         res.status(411).json({
             message: "Incorrect credentials"
         })
         return;
     }
 
-    const token = jwt.sign({ userId: userExist.id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ userId: userExists.id }, process.env.JWT_SECRET);
 
     res.json({
         token: token
     })
 })
 
-app.get("/dashboard", authmiddleware, (req, res) => {
+app.get("/dashboard", authmiddleware, async (req, res) => {
     const userId = req.userId;
-    const userOrg = ORGANIZATIONS.filter(org => org.admin === userId || org.member.includes(userId));
 
-    const result = userOrg.map(org => {
-        const role = org.admin === userId ? "admin" : "member";
+    const userOrgs = await organizationModel.find({
+        $or: [
+            { admin: userId },
+            { members: userId }
+        ]
+    });
+
+    const result = userOrgs.map(org => {
+        const role = org.admin.toString() === userId ? "admin" : "member";
         return {
-            id: org.id,
+            id: org._id,
             title: org.title,
             description: org.description,
             role: role
@@ -92,75 +101,86 @@ app.get("/dashboard", authmiddleware, (req, res) => {
     })
 })
 
-app.post("/organization", authmiddleware, (req, res) => {
+app.post("/organization", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    ORGANIZATIONS.push({
-        id: ORGANIZATIONS_ID++,
-        title: req.body.title,
+    const neworganization = await organizationModel.create({
+        title:req.body.title,
         description: req.body.description,
         admin: userId,
-        member: []
-    })
+        members: []
+    });
+    
     res.json({
         message: "org created",
-        id: ORGANIZATIONS_ID - 1
+        id: neworganization._id
     })
 })
 
-app.get("/organizations/:orgId", authmiddleware, (req, res) => {
+app.get("/organizations/:orgId", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
+    const organization_id = req.params.orgId;
 
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if (!organization) {
         return res.status(404).json({
             message: "there is no such organization"
         });
     }
 
-    const isAdmin = organization.admin === userId;
-    const isMember = organization.member.includes(userId);
+    const isAdmin = organization.admin.toString() === userId;
+    const isMember = organization.members.some(m => m.toString() === userId);
 
     if (!isAdmin && !isMember) {
         return res.status(403).json({
             message: "you are not a member of this organization"
         });
     }
+    const members= await Promise.all(
+        organization.members.map(async(memberId)=>{
+            const users=userModel.findOne({
+                _id:memberId
+            })
+            return {
+                id:users._id,
+                username:users.username
+            };
+        })
+    )
 
     res.json({
         organization: {
-            id: organization.id,
+            id: organization._id,
             title: organization.title,
             role: isAdmin ? "admin" : "member",
-            members: organization.member.map(memberId => {
-                const user = USERS.find(u => u.id === memberId);
-                return {
-                    id: user.id,
-                    username: user.username
-                };
-            })
+            members: members
         }
     });
 })
 
-app.delete("/organizations/:orgId", authmiddleware, (req,res)=>{
+app.delete("/organizations/:orgId", authmiddleware, async(req,res)=>{
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
+    const organization_id = req.params.orgId;
 
-    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if(!organization){
         return res.status(403).json({
             message:"no such organization!"
         })
     }
 
-    if(userId!==organization.admin){
+    if(userId!==organization.admin.toString()){
         return res.status(403).json({
             message:"you are not the admin"
         })
     }
 
-    ORGANIZATIONS=ORGANIZATIONS.filter(org=>org.id!==organization_id);
+    organizationModel.deleteOne({
+        _id:organization_id
+    })
 
     res.json({
         message:"Organization deleted!",
@@ -168,20 +188,24 @@ app.delete("/organizations/:orgId", authmiddleware, (req,res)=>{
     })
 })
 
-app.post("/add-member-to-organization", authmiddleware, (req, res) => {
+app.post("/add-member-to-organization", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.body.organization_id);
+    const organization_id = req.body.organization_id;
     const member_username = req.body.member_username;
 
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
-    if (!organization || userId != organization.admin) {
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
+    if (!organization || userId != organization.admin.toString()) {
         res.status(403).json({
             message: "either there is no organization or you are not admin!"
         })
         return;
     }
 
-    const validMember = USERS.find(u => u.username === member_username);
+    const validMember = await userModel.findOne({
+        username:member_username
+    })
     if (!validMember) {
         res.status(403).json({
             message: "not a valid user"
@@ -189,26 +213,36 @@ app.post("/add-member-to-organization", authmiddleware, (req, res) => {
         return;
     }
 
-    organization.member.push(validMember.id);
+    await organization.updateOne({
+        _id:organization_id
+    },{
+        $push:{
+            "members":member_username._id
+        }
+    })
     res.json({
         message: "new member added"
     })
 })
 
-app.delete("/members", authmiddleware, (req, res) => {
+app.delete("/members", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.body.organization_id);
+    const organization_id = req.body.organization_id;
     const member_username = req.body.member_username;
 
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
-    if (!organization || userId !== organization.admin) {
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
+    if (!organization || userId !== organization.admin.toString()) {
         res.status(403).json({
             message: "either there is no organization or you are not admin!"
         })
         return;
     }
 
-    const validMember = USERS.find(u => u.username === member_username);
+    const validMember = await userModel.findOne({
+        username:member_username
+    })
     if (!validMember) {
         res.status(403).json({
             message: "not a valid user"
@@ -216,7 +250,13 @@ app.delete("/members", authmiddleware, (req, res) => {
         return;
     }
 
-    organization.member = organization.member.filter(user => user !== validMember.id);
+    await organization.updateOne({
+        _id:organization_id
+    },{
+        $pull:{
+            "members":validMember._id
+        }
+    })
     res.json({
         message: "member removed"
     })
@@ -224,10 +264,12 @@ app.delete("/members", authmiddleware, (req, res) => {
 
 })
 
-app.post("/organizations/:orgId/board", authmiddleware, (req, res) => {
+app.post("/organizations/:orgId/boards", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
+    const organization_id = req.params.orgId;
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if (!organization) {
         res.status(403).json({
             message: "no such organization!"
@@ -235,29 +277,32 @@ app.post("/organizations/:orgId/board", authmiddleware, (req, res) => {
         return;
     }
 
-    if (userId !== organization.admin) {
+    if (userId !== organization.admin.toString()) {
         res.status(403).json({
             message: "you are not the admin!"
         })
         return;
     }
 
-    BOARDS.push({
-        id: BOARDS_ID++,
-        name: req.body.title,
-        orgId: organization_id,
-    })
+    const newboard = await boardsModel.create({
+        name:req.body.title,
+        orgId:organization_id
+    
+    });
+
 
     res.json({
         message: "board created",
-        id: BOARDS_ID - 1
+        id: newboard._id
     })
 })
 
-app.get("/organizations/:orgId/board", authmiddleware, (req, res) => {
+app.get("/organizations/:orgId/boards", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
+    const organization_id = req.params.orgId;
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if (!organization) {
         res.status(403).json({
             message: "no such organization!"
@@ -265,8 +310,8 @@ app.get("/organizations/:orgId/board", authmiddleware, (req, res) => {
         return;
     }
 
-    const isAdmin = organization.admin === userId;
-    const isMember = organization.member.includes(userId);
+    const isAdmin = organization.admin.toString() === userId;
+    const isMember = organization.members.some(m => m.toString() === userId);
 
     if (!isAdmin && !isMember) {
         res.status(403).json({
@@ -275,94 +320,111 @@ app.get("/organizations/:orgId/board", authmiddleware, (req, res) => {
         return;
     }
 
-    const boards = BOARDS.filter((brd) => {
-        return brd.orgId === organization_id;
+    const boards=await boardsModel.find({
+        orgId:organization_id
     })
-
+    
     res.json({
-        boards: boards.map(brd => ({ id: brd.id, title: brd.name }))
-    })
+            boards: boards.map(brd => ({
+                id: brd._id,
+                title: brd.name
+            }))
+    });
 })
 
-app.get("/boards/:boardId", authmiddleware, (req,res)=>{
-    const userId = req.userId;
-    const board_id = parseInt(req.params.boardId);
-    const board = BOARDS.find(brd=>brd.id===board_id);
+app.get("/boards/:boardId", authmiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const board_id = req.params.boardId;
 
-    if(!board){
-        return res.status(404).json({
-            message:"there is no such board",
-        })
-    }
+        const board = await boardsModel.findOne({ _id: board_id });
+        if (!board) {
+            return res.status(404).json({
+                message: "there is no such board"
+            });
+        }
 
-    const organization = ORGANIZATIONS.find(org=>org.id===board.orgId)
-    if(!organization){
-        return res.status(403).json({
-            message:"the organization for this board no longer exists",
-        })
-    }
+        const organization = await organizationModel.findOne({ _id: board.orgId });
+        if (!organization) {
+            return res.status(404).json({
+                message: "the organization for this board no longer exists"
+            });
+        }
 
-    const isAdmin = organization.admin === userId;
-    const isMember = organization.member.includes(userId);
+        const isAdmin = organization.admin.toString() === userId;
+        const isMember = organization.members.some(m => m.toString() === userId);
 
-    if (!isAdmin && !isMember) {
-        return res.status(403).json({
-            message: "you are not a member of this organization"
+        if (!isAdmin && !isMember) {
+            return res.status(403).json({
+                message: "you are not a member of this organization"
+            });
+        }
+
+        const issues = await issuesModel.find({ boardId: board_id });
+
+        res.json({
+            id: board._id,
+            title: board.name,
+            role: isAdmin ? "admin" : "member",
+            issues: issues.map(iss => ({
+                id: iss._id,
+                title: iss.title,
+                status: iss.status
+            }))
+        });
+    } catch (err) {
+        res.status(400).json({
+            message: "invalid board id"
         });
     }
-
-    const boardIssues = ISSUES
-        .filter(iss => iss.boardId === board_id)
-        .map(iss => ({ id: iss.id, title: iss.title, status: iss.status }));
-
-    res.json({
-        id: board.id,
-        title: board.name,
-        issues: boardIssues
-    })
 })
 
-app.delete("/organizations/:orgId/board/:boardId", authmiddleware, (req,res)=>{
+app.delete("/organizations/:orgId/boards/:boardId", authmiddleware, async(req,res)=>{
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const board_id = parseInt(req.params.boardId);
+    const organization_id = req.params.orgId;
+    const board_id = req.params.boardId;
 
 
-    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if(!organization){
         return res.status(403).json({
             message:"no such organization!"
         })
     }
 
-    const board = BOARDS.find(brd=>brd.id===board_id);
+    const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
     }
 
-    if(userId!==organization.admin){
+    if(userId!==organization.admin.toString()){
         return res.status(403).json({
             message:"you are not the admin"
         })
     }
 
-
-    BOARDS=BOARDS.filter(brd=>brd.id!==board_id);
+    await boardsModel.deleteOne({ _id: board_id });
 
     res.json({
-        message:"board deleted!",
-        id:board_id
-    })
+        message: "board deleted!",
+        id: board_id
+    });
+
+    
 })
 
-app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, (req, res) => {
+app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(req, res) => {
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const board_id = parseInt(req.params.boardId);
+    const organization_id = req.params.orgId;
+    const board_id = req.params.boardId;
 
-    const organization = ORGANIZATIONS.find(org => org.id === organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if (!organization) {
         res.status(403).json({
             message: "no such organization!"
@@ -370,7 +432,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, (req, r
         return;
     }
 
-    const board = BOARDS.find(brd => brd.id === board_id);
+    const board = await boardsModel.findOne({ _id: board_id });
     if (!board || board.orgId !== organization_id) {
         res.status(403).json({
             message: "there is no such board"
@@ -378,7 +440,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, (req, r
         return;
     }
 
-    if (userId !== organization.admin) {
+    if (userId !== organization.admin.toString()) {
         res.status(403).json({
             message: "you are not the admin"
         })
@@ -393,8 +455,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, (req, r
         return;
     }
 
-    ISSUES.push({
-        id: ISSUES_ID++,
+    const newIssue=issuesModel.create({
         boardId: board_id,
         title: title,
         status: req.body.status || "todo",
@@ -402,38 +463,43 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, (req, r
 
     res.json({
         message: "issue created",
-        id: ISSUES_ID - 1
+        id: newIssue._id
     })
 
 })
 
-app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware, (req,res)=>{
+app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware, async(req,res)=>{
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const board_id = parseInt(req.params.boardId);
-    const issue_id = parseInt(req.params.issueId);
+    const organization_id = req.params.orgId;
+    const board_id = req.params.boardId;
+    const issue_id = req.params.issueId;
 
-    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if(!organization){
         return res.status(403).json({
             message:"no such organization!"
         })
     }
 
-    const board = BOARDS.find(brd=>brd.id===board_id);
+    const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
     }
 
-    if(userId!==organization.admin){
+    if(userId!==organization.admin.toString()){
         return res.status(403).json({
             message:"you are not the admin"
         })
     }
 
-    const issue = ISSUES.find(iss=>iss.id===issue_id);
+
+    const issue = issuesModel.findOne({
+        _id:issue_id
+    })
     if(!issue || issue.boardId !== board_id){
         return res.status(404).json({
             message:"there is no such issue"
@@ -456,45 +522,49 @@ app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware,
     })
 })
 
-app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware, (req,res)=>{
+app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware, async(req,res)=>{
     const userId = req.userId;
-    const organization_id = parseInt(req.params.orgId);
-    const board_id = parseInt(req.params.boardId);
-    const issue_id = parseInt(req.params.issueId);
+    const organization_id = req.params.orgId;
+    const board_id = req.params.boardId;
+    const issue_id = req.params.issueId;
 
-    const organization = ORGANIZATIONS.find(org=>org.id===organization_id);
+    const organization = await organizationModel.findOne({
+        _id:organization_id
+    })
     if(!organization){
         return res.status(403).json({
             message:"no such organization!"
         })
     }
 
-    const board = BOARDS.find(brd=>brd.id===board_id);
+    const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
     }
 
-    if(userId!==organization.admin){
+    if(userId!==organization.admin.toString()){
         return res.status(403).json({
             message:"you are not the admin"
         })
     }
 
-    const issue = ISSUES.find(iss=>iss.id===issue_id);
+    const issue = issuesModel.findOne({
+        _id:issue_id
+    })
     if(!issue || issue.boardId !== board_id){
         return res.status(404).json({
             message:"there is no such issue"
         })
     }
 
-    ISSUES = ISSUES.filter(iss => iss.id !== issue_id)
+    await issuesModel.deleteOne({ _id: issue_id });
 
     res.json({
-        message:"issue deleted!",
-        id:issue_id
-    })
+        message: "issue deleted!",
+        id: board_id
+    });
 })
 
 app.listen(3000);
