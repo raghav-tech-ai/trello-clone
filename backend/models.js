@@ -18,7 +18,7 @@ const boardsSchema = mongoose.Schema({
     name:String,
     orgId:mongoose.Types.ObjectId
 })
-
+const VALID_STATUS = ["todo", "in-progress", "done"];
 const issuesSchema = mongoose.Schema({
     boardId:mongoose.Types.ObjectId,
     title:String,
@@ -40,5 +40,6 @@ module.exports={
     organizationModel,
     userModel,
     boardsModel,
-    issuesModel
+    issuesModel,
+    VALID_STATUS
 }

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Organization - Taskora</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f3f6;
+    }
+
+    .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
+        padding: 15px 30px;
+        border-bottom: 1px solid #e3e2e8;
+    }
+
+    .navbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .navbar-left .heading {
+        margin: 0;
+        color: #0F172A;
+        font-size: 18px;
+    }
+
+    .breadcrumb {
+        font-size: 13px;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+
+    .user-circle {
+        width: 34px;
+        height: 34px;
+        background: #E05A47;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .org-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .page-heading {
+        color: #0F172A;
+        margin: 0;
+    }
+
+    .delete-org-btn {
+        font-size: 13px;
+        color: #b5432f;
+        background: none;
+        border: 1px solid #e3c9c5;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+    }
+
+    .page-subtext {
+        color: #666;
+        font-size: 14px;
+        margin: 0 0 30px 0;
+    }
+
+    .section {
+        margin-bottom: 35px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .section-title {
+        color: #0F172A;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .add-btn {
+        font-size: 13px;
+        color: #E05A47;
+        background: none;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .board-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+    }
+
+    .board-card {
+        background: white;
+        border: 1px solid #e3e2e8;
+        border-radius: 8px;
+        padding: 18px;
+        cursor: pointer;
+        color: #0F172A;
+        font-weight: bold;
+    }
+
+    .member-list {
+        background: white;
+        border: 1px solid #e3e2e8;
+        border-radius: 8px;
+    }
+
+    .member-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .member-row:last-child {
+        border-bottom: none;
+    }
+
+    .member-username {
+        color: #0F172A;
+        font-size: 14px;
+    }
+
+    .member-role {
+        color: #666;
+        font-size: 13px;
+        margin-right: 15px;
+    }
+
+    .remove-btn {
+        font-size: 13px;
+        color: #b5432f;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="assets/logo.svg" height="28">
+            <h3 class="heading">Taskora</h3>
+            <span class="breadcrumb"><a href="dashboard.html">Dashboard</a> / Acme Corp</span>
+        </div>
+        <div class="user-circle">AC</div>
+    </nav>
+
+    <main class="main">
+        <div class="org-header">
+            <h1 class="page-heading">Acme Corp</h1>
+            <button class="delete-org-btn" id="delete-org-btn">Delete Organization</button>
+        </div>
+        <p class="page-subtext">Product and engineering team workspace</p>
+
+        <div class="section">
+            <div class="section-header">
+                <h3 class="section-title">Boards</h3>
+                <button class="add-btn" id="create-board-btn">+ New Board</button>
+            </div>
+            <div class="board-grid" id="board-list">
+                <div class="board-card">Sprint Board</div>
+                <div class="board-card">Bug Tracker</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h3 class="section-title">Members</h3>
+                <button class="add-btn" id="add-member-btn">+ Add Member</button>
+            </div>
+            <div class="member-list" id="member-list">
+                <div class="member-row">
+                    <span class="member-username">alexchen</span>
+                    <div>
+                        <span class="member-role">Admin</span>
+                    </div>
+                </div>
+                <div class="member-row">
+                    <span class="member-username">priya_dev</span>
+                    <div>
+                        <span class="member-role">Member</span>
+                        <button class="remove-btn">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

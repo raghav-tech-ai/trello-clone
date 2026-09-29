@@ -2,18 +2,8 @@ require("dotenv").config()
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const { authmiddleware } = require("./middleware")
-const {userModel, organizationModel,boardsModel,issuesModel} = require("./models")
+const {userModel, organizationModel,boardsModel,issuesModel,VALID_STATUS} = require("./models")
 
-
-let BOARDS_ID = 1;
-let ISSUES_ID = 1;
-let VALID_STATUS = ["todo", "in-progress", "done"];
-
-
-
-const BOARDS = [];
-
-let ISSUES = []
 
 const app = express();
 
@@ -139,7 +129,7 @@ app.get("/organizations/:orgId", authmiddleware, async(req, res) => {
     }
     const members= await Promise.all(
         organization.members.map(async(memberId)=>{
-            const users=userModel.findOne({
+            const users=await userModel.findOne({
                 _id:memberId
             })
             return {
@@ -178,7 +168,7 @@ app.delete("/organizations/:orgId", authmiddleware, async(req,res)=>{
         })
     }
 
-    organizationModel.deleteOne({
+    await organizationModel.deleteOne({
         _id:organization_id
     })
 
@@ -213,13 +203,7 @@ app.post("/add-member-to-organization", authmiddleware, async(req, res) => {
         return;
     }
 
-    await organization.updateOne({
-        _id:organization_id
-    },{
-        $push:{
-            "members":member_username._id
-        }
-    })
+    await organizationModel.updateOne({_id:organization_id},{$push:{"members":validMember._id}})
     res.json({
         message: "new member added"
     })
@@ -250,7 +234,7 @@ app.delete("/members", authmiddleware, async(req, res) => {
         return;
     }
 
-    await organization.updateOne({
+    await organizationModel.updateOne({
         _id:organization_id
     },{
         $pull:{
@@ -395,7 +379,7 @@ app.delete("/organizations/:orgId/boards/:boardId", authmiddleware, async(req,re
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
-    if(!board || board.orgId !== organization_id){
+    if(!board || board.orgId.toString() !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
@@ -433,7 +417,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(r
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
-    if (!board || board.orgId !== organization_id) {
+    if (!board || board.orgId.toString() !== organization_id) {
         res.status(403).json({
             message: "there is no such board"
         })
@@ -455,7 +439,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(r
         return;
     }
 
-    const newIssue=issuesModel.create({
+    const newIssue=await issuesModel.create({
         boardId: board_id,
         title: title,
         status: req.body.status || "todo",
@@ -484,7 +468,7 @@ app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware,
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
-    if(!board || board.orgId !== organization_id){
+    if(!board || board.orgId.toString() !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
@@ -497,10 +481,10 @@ app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware,
     }
 
 
-    const issue = issuesModel.findOne({
+    const issue = await issuesModel.findOne({
         _id:issue_id
     })
-    if(!issue || issue.boardId !== board_id){
+    if(!issue || issue.boardId.toString() !== board_id){
         return res.status(404).json({
             message:"there is no such issue"
         })
@@ -514,6 +498,7 @@ app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware,
     }
 
     issue.status = newStatus;
+    await issue.save();
 
     res.json({
         message:"issue status updated",
@@ -538,7 +523,7 @@ app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddlewa
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
-    if(!board || board.orgId !== organization_id){
+    if(!board || board.orgId.toString() !== organization_id){
         return res.status(403).json({
             message:"there is no such board"
         })
@@ -550,10 +535,10 @@ app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddlewa
         })
     }
 
-    const issue = issuesModel.findOne({
+    const issue = await issuesModel.findOne({
         _id:issue_id
     })
-    if(!issue || issue.boardId !== board_id){
+    if(!issue || issue.boardId.toString() !== board_id){
         return res.status(404).json({
             message:"there is no such issue"
         })
@@ -567,4 +552,6 @@ app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddlewa
     });
 })
 
-app.listen(3000);
+app.listen(3000,()=>{
+    console.log("server running on port 3000")
+});

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" fill="none">
+  <!-- Container / Background badge -->
+  <rect width="240" height="240" rx="48" fill="#0F172A"/>
+  
+  <!-- Subtle inner border highlight -->
+  <rect x="1" y="1" width="238" height="238" rx="47" stroke="#334155" stroke-width="2" stroke-opacity="0.6"/>
+
+  <!-- Left Pillar / Indicator (Taskora Accent Orange/Coral) -->
+  <circle cx="68" cy="52" r="14" fill="#E05A47"/>
+  <rect x="54" y="80" width="28" height="106" rx="14" fill="#E05A47"/>
+
+  <!-- Middle Pillar (Secondary Neutral / In-Progress State) -->
+  <rect x="106" y="106" width="28" height="80" rx="14" fill="#94A3B8"/>
+
+  <!-- Right Pillar (Clean Crisp Light / Completed Pillar) -->
+  <rect x="158" y="64" width="28" height="122" rx="14" fill="#F1F5F9"/>
+</svg>

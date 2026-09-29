@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sign Up - Taskora</title>
+<title>Sign In - Taskora</title>
 <style>
     body {
         margin: 0;
@@ -51,12 +51,22 @@
         margin-bottom: 15px;
     }
 
+    .field-label-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
     .field label {
-        display: block;
         font-size: 13px;
         font-weight: bold;
-        margin-bottom: 5px;
         color: #0F172A;
+    }
+
+    .forgot-link {
+        font-size: 12px;
+        color: #E05A47;
+        text-decoration: none;
     }
 
     .field input {
@@ -69,7 +79,16 @@
         box-sizing: border-box;
     }
 
-    .signup-btn {
+    .remember-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #0F172A;
+        margin-bottom: 15px;
+    }
+
+    .signin-btn {
         width: 100%;
         padding: 12px;
         background: #E05A47;
@@ -108,30 +127,35 @@
 
         <h1 class="heading">Taskora</h1>
         <p class="tagline">Plan work. Move faster.</p>
-        <p class="subtext">Create an account to start organizing your teams and boards.</p>
+        <p class="subtext">Sign in to access your organizations and project boards.</p>
 
-        <form id="signup-form">
+        <form id="signin-form">
             <div class="field">
-                <label for="username">Username</label>
+                <div class="field-label-row">
+                    <label for="username">Username</label>
+                </div>
                 <input type="text" id="username" placeholder="alexchen">
             </div>
 
             <div class="field">
-                <label for="password">Password</label>
+                <div class="field-label-row">
+                    <label for="password">Password</label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
                 <input type="password" id="password" placeholder="Enter password">
             </div>
 
-            <div class="field">
-                <label for="confirm-password">Confirm password</label>
-                <input type="password" id="confirm-password" placeholder="Re-enter password">
+            <div class="remember-row">
+                <input type="checkbox" id="remember">
+                <label for="remember">Stay signed in</label>
             </div>
 
-            <button type="submit" class="signup-btn" id="signup-btn">Create your Taskora account</button>
+            <button type="submit" class="signin-btn" id="signin-btn">Sign in to Taskora</button>
         </form>
 
         <p class="divider">OR</p>
 
-        <p class="footer-text">Already have an account? <a href="signin.html">Sign in</a></p>
+        <p class="footer-text">Don't have an account? <a href="signup.html">Create an account (Sign up)</a></p>
     </div>
 
 </body>
