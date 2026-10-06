@@ -2,7 +2,7 @@
 
 A full-stack Trello clone built from scratch using HTML, CSS, JavaScript, Node.js, Express.js, and MongoDB.
 
-The project is being developed to understand how a real-world project management application works, including authentication, boards, lists, cards, and drag-and-drop functionality.
+The project is being developed to understand how a real-world project management application works, including authentication, boards, lists, cards.
 
 ## Tech Stack
 
@@ -40,13 +40,6 @@ The project is being developed to understand how a real-world project management
 * [ ] Edit and delete lists
 * [ ] Create cards
 * [ ] Edit and delete cards
-* [ ] Drag and drop cards
-* [ ] Move cards between lists
 * [ ] Board sharing
 * [ ] Responsive design
 
-## Project Status
-
-🚧 **Under Development**
-
-This project is being developed incrementally, with features added and documented throughout the development process.
