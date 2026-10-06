@@ -5,7 +5,7 @@ function authmiddleware(req, res, next) {
     const token = req.headers.token;
 
     if (!token) {
-        res.status(403).json({
+        res.status(401).json({
             message: "token is missing"
         });
         return;
@@ -18,7 +18,7 @@ function authmiddleware(req, res, next) {
         req.userId = userId;
         next();
     } catch (e) {
-        res.status(403).json({
+        res.status(401).json({
             message: "token is incorrect"
         });
     }

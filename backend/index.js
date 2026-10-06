@@ -19,7 +19,7 @@ app.post("/signup",async (req, res) => {
         username:username,
     });
     if (userExists) {
-        res.status(411).json({
+        res.status(409).json({
             message: "user with this username already exists"
         })
         return;
@@ -53,7 +53,7 @@ app.post("/signin", async(req, res) => {
         password:password
     });
     if (!userExists) {
-        res.status(411).json({
+        res.status(401).json({
             message: "Incorrect credentials"
         })
         return;
@@ -100,7 +100,7 @@ app.post("/organization", authmiddleware, async(req, res) => {
         members: []
     });
     
-    res.json({
+    res.status(200).json({
         message: "org created",
         id: neworganization._id
     })
@@ -157,7 +157,7 @@ app.delete("/organizations/:orgId", authmiddleware, async(req,res)=>{
         _id:organization_id
     })
     if(!organization){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"no such organization!"
         })
     }
@@ -187,7 +187,7 @@ app.post("/add-member-to-organization", authmiddleware, async(req, res) => {
         _id:organization_id
     })
     if (!organization || userId != organization.admin.toString()) {
-        res.status(403).json({
+        res.status(404).json({
             message: "either there is no organization or you are not admin!"
         })
         return;
@@ -197,7 +197,7 @@ app.post("/add-member-to-organization", authmiddleware, async(req, res) => {
         username:member_username
     })
     if (!validMember) {
-        res.status(403).json({
+        res.status(404).json({
             message: "not a valid user"
         })
         return;
@@ -218,7 +218,7 @@ app.delete("/members", authmiddleware, async(req, res) => {
         _id:organization_id
     })
     if (!organization || userId !== organization.admin.toString()) {
-        res.status(403).json({
+        res.status(404).json({
             message: "either there is no organization or you are not admin!"
         })
         return;
@@ -228,7 +228,7 @@ app.delete("/members", authmiddleware, async(req, res) => {
         username:member_username
     })
     if (!validMember) {
-        res.status(403).json({
+        res.status(404).json({
             message: "not a valid user"
         })
         return;
@@ -255,7 +255,7 @@ app.post("/organizations/:orgId/boards", authmiddleware, async(req, res) => {
         _id:organization_id
     })
     if (!organization) {
-        res.status(403).json({
+        res.status(404).json({
             message: "no such organization!"
         })
         return;
@@ -373,14 +373,14 @@ app.delete("/organizations/:orgId/boards/:boardId", authmiddleware, async(req,re
         _id:organization_id
     })
     if(!organization){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"no such organization!"
         })
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId.toString() !== organization_id){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"there is no such board"
         })
     }
@@ -410,7 +410,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(r
         _id:organization_id
     })
     if (!organization) {
-        res.status(403).json({
+        res.status(404).json({
             message: "no such organization!"
         })
         return;
@@ -418,7 +418,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(r
 
     const board = await boardsModel.findOne({ _id: board_id });
     if (!board || board.orgId.toString() !== organization_id) {
-        res.status(403).json({
+        res.status(404).json({
             message: "there is no such board"
         })
         return;
@@ -433,7 +433,7 @@ app.post("/organizations/:orgId/boards/:boardId/issues", authmiddleware, async(r
 
     const title = req.body.title;
     if (!title) {
-        res.status(403).json({
+        res.status(404).json({
             message: "issue title is required"
         })
         return;
@@ -462,14 +462,14 @@ app.put("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddleware,
         _id:organization_id
     })
     if(!organization){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"no such organization!"
         })
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId.toString() !== organization_id){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"there is no such board"
         })
     }
@@ -517,14 +517,14 @@ app.delete("/organizations/:orgId/boards/:boardId/issues/:issueId", authmiddlewa
         _id:organization_id
     })
     if(!organization){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"no such organization!"
         })
     }
 
     const board = await boardsModel.findOne({ _id: board_id });
     if(!board || board.orgId.toString() !== organization_id){
-        return res.status(403).json({
+        return res.status(404).json({
             message:"there is no such board"
         })
     }

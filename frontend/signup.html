@@ -1,106 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Sign Up - Taskora</title>
-<style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #f4f3f6;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <title>Sign Up - Taskora</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f3f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    .card {
-        background: white;
-        width: 360px;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
+        .card {
+            background: white;
+            width: 360px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
 
-    .logo {
-        display: block;
-        margin: 0 auto 15px auto;
-    }
+        .logo {
+            display: block;
+            margin: 0 auto 15px auto;
+        }
 
-    .heading {
-        text-align: center;
-        margin: 0 0 5px 0;
-        color: #0F172A;
-    }
+        .heading {
+            text-align: center;
+            margin: 0 0 5px 0;
+            color: #0F172A;
+        }
 
-    .tagline {
-        text-align: center;
-        color: #666;
-        font-size: 13px;
-        margin: 0 0 10px 0;
-    }
+        .tagline {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin: 0 0 10px 0;
+        }
 
-    .subtext {
-        text-align: center;
-        color: #666;
-        font-size: 13px;
-        margin-bottom: 25px;
-    }
+        .subtext {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
 
-    .field {
-        margin-bottom: 15px;
-    }
+        .field {
+            margin-bottom: 15px;
+        }
 
-    .field label {
-        display: block;
-        font-size: 13px;
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #0F172A;
-    }
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #0F172A;
+        }
 
-    .field input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background: #f0eff5;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
+        .field input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f0eff5;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
 
-    .signup-btn {
-        width: 100%;
-        padding: 12px;
-        background: #E05A47;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-    }
+        .signup-btn {
+            width: 100%;
+            padding: 12px;
+            background: #E05A47;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-    .divider {
-        text-align: center;
-        color: #999;
-        font-size: 12px;
-        margin: 20px 0;
-    }
+        .divider {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin: 20px 0;
+        }
 
-    .footer-text {
-        text-align: center;
-        font-size: 13px;
-        color: #666;
-    }
+        .footer-text {
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+        }
 
-    .footer-text a {
-        color: #E05A47;
-        font-weight: bold;
-        text-decoration: none;
-    }
-</style>
+        .footer-text a {
+            color: #E05A47;
+            font-weight: bold;
+            text-decoration: none;
+        }
+    </style>
 </head>
+
 <body>
 
     <div class="card">
@@ -134,5 +136,10 @@
         <p class="footer-text">Already have an account? <a href="signin.html">Sign in</a></p>
     </div>
 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.2/axios.min.js"></script>
+    <script src="js/api.js"></script>
+
 </body>
+
 </html>
