@@ -1,8 +1,7 @@
+const orgId = new URLSearchParams(window.location.search).get("orgId");
 
 async function showOrgDetails() {
     try {
-        const orgId = new URLSearchParams(window.location.search).get("orgId");
-
         const response = await api.get(`/organizations/${orgId}`);
         const org = response.data.organization;
 
@@ -54,5 +53,27 @@ async function showOrgDetails() {
         }
     }
 }
+
+async function createBoard() {
+    const title = prompt("Board name:");
+    if (!title) return;
+
+    try {
+        await api.post(`/organizations/${orgId}/boards`, {
+            title: title
+        });
+
+        showOrgDetails();
+
+    } catch (error) {
+        if (error.response) {
+            alert(error.response.data.message);
+        } else {
+            alert("Something went wrong creating the board.");
+        }
+    }
+}
+
+document.getElementById("create-board-btn").addEventListener("click", createBoard);
 
 showOrgDetails();
